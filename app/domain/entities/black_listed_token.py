@@ -10,5 +10,5 @@ class BlacklistedToken(Base):
     __tablename__ = "blacklisted_tokens"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False)
+    token: Mapped[str] = mapped_column(String(1000), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
