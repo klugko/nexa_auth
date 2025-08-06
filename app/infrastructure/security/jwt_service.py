@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
-from jose import jwt
-from app.config import settings
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.db.session import get_db
 from app.infrastructure.repositories.user_repository_impl import UserRepositoryImpl
+from jose import jwt
+from datetime import datetime, timedelta
+from app.config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
-
+bearer_scheme = HTTPBearer()
 
 class JWTService:
     def __init__(self):
@@ -35,10 +34,11 @@ class JWTService:
         return jwt.decode(token, self.public_key, algorithms=[settings.jwt_algorithm])
 
     async def get_current_user(
-            self,
-            token: str = Depends(oauth2_scheme),
-            db: AsyncSession = Depends(get_db)
+        self,
+        credentials = Depends(bearer_scheme),
+        db: AsyncSession = Depends(get_db)
     ):
+        token = credentials.credentials
         try:
             payload = self.decode_token(token)
             user_id: str = payload.get("sub")
