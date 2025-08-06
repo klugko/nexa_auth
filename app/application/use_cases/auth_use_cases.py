@@ -4,9 +4,12 @@ from app.infrastructure.security.jwt_service import JWTService
 from app.domain.entities.user import User
 from app.infrastructure.repositories.user_repository_impl import UserRepositoryImpl
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.infrastructure.repositories.blacklisted_token_repository_impl import BlacklistedTokenRepositoryImpl
 
 jwt_service = JWTService()
 user_repo = UserRepositoryImpl()
+blacklist_repo = BlacklistedTokenRepositoryImpl()
+
 
 class AuthUseCases:
     async def register(self, db: AsyncSession, email: str, password: str):
@@ -24,7 +27,13 @@ class AuthUseCases:
         refresh_token = jwt_service.create_refresh_token(str(user.id))
         return access_token, refresh_token
 
-    async def refresh(self, refresh_token: str):
+    async def logout(self, db: AsyncSession, refresh_token: str):
+        await blacklist_repo.add(db, refresh_token)
+        return {"message": "Déconnexion réussie"}
+
+    async def refresh(self, db: AsyncSession, refresh_token: str):
+        if await blacklist_repo.exists(db, refresh_token):
+            raise HTTPException(status_code=401, detail="Token invalide")
         try:
             payload = jwt_service.decode_token(refresh_token)
             user_id = payload.get("sub")

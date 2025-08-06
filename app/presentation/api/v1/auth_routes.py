@@ -21,3 +21,7 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
 async def refresh(data: RefreshRequest):
     access_token = await auth_use_case.refresh(data.refresh_token)
     return {"access_token": access_token, "refresh_token": data.refresh_token}
+
+@router.post("/logout", response_model=MessageResponse)
+async def logout(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    return await auth_use_case.logout(db, data.refresh_token)

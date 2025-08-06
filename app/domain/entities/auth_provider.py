@@ -25,4 +25,4 @@ class AuthProvider(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="auth_providers")
+    auth_providers = relationship("AuthProvider", back_populates="user")
