@@ -1,0 +1,111 @@
+# Fichiers et dossiers spécifiques à Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environnements virtuels
+.env/
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Fichiers de l'éditeur/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+
+# Fichiers de cache et logs
+*.log
+logs/
+.pytest_cache/
+.cache/
+.coverage
+coverage.xml
+*.cover
+*.mo
+*.pot
+
+# Fichiers de documentation
+docs/_build/
+doc/_build/
+
+# Fichiers de déploiement et configuration
+*.env
+*.local
+.env.local
+.env.development
+.env.test
+.env.production
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# Fichiers de tests et benchmarks
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# Fichiers spécifiques à FastAPI/Starlette
+*.sqlite
+*.db
+
+# Fichiers Jupyter Notebook
+.ipynb_checkpoints/
+
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Fichiers Windows
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*~
+\#*\#
+.\#*
+*#
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+
+# Fichiers de données sensibles
+secrets.py
+*.key
+*.cert
+*.pem
+credentials.json
+*.csv
+*.json
+*.xlsx
