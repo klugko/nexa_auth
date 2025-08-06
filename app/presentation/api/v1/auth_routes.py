@@ -61,14 +61,14 @@ async def refresh(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Erreur interne lors du rafraîchissement du token")
 
 
-@router.post("/logout", response_model=MessageResponse)
-async def logout(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    try:
-        return await auth_use_case.logout(db, data.refresh_token)
-    except HTTPException as e:
-        raise e
-    except Exception:
-        raise HTTPException(status_code=500, detail="Erreur interne lors de la déconnexion")
+# @router.post("/logout", response_model=MessageResponse)
+# async def logout(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
+#     try:
+#         return await auth_use_case.logout(db, data.refresh_token)
+#     except HTTPException as e:
+#         raise e
+#     except Exception:
+#         raise HTTPException(status_code=500, detail="Erreur interne lors de la déconnexion")
 
 
 @router.get("/me")
