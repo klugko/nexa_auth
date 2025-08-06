@@ -11,15 +11,17 @@ router = APIRouter(prefix="/auth/v1", tags=["Auth"])
 auth_use_case = AuthUseCases()
 jwt_service = JWTService()
 
+
 @router.post("/register", response_model=MessageResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    try:
-        await auth_use_case.register(db, data.email, data.password)
-        return {"message": "Inscription réussie"}
-    except HTTPException as e:
-        raise e
-    except Exception:
-        raise HTTPException(status_code=500, detail="Erreur interne lors de l'inscription")
+    await auth_use_case.register(
+        db,
+        data.email,
+        data.password,
+        data.first_name,
+        data.last_name
+    )
+    return {"message": "Inscription réussie"}
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):

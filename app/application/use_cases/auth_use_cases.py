@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException, status
 from app.infrastructure.security.password_hash import hash_password, verify_password
 from app.infrastructure.security.jwt_service import JWTService
@@ -12,11 +14,17 @@ blacklist_repo = BlacklistedTokenRepositoryImpl()
 
 
 class AuthUseCases:
-    async def register(self, db: AsyncSession, email: str, password: str):
+    async def register(self, db: AsyncSession, email: str, password: str, first_name: Optional[str] = None,
+                       last_name: Optional[str] = None):
         existing_user = await user_repo.get_by_email(db, email)
         if existing_user:
             raise HTTPException(status_code=400, detail="Cet utilisateur existe déjà")
-        user = User(email=email, hashed_password=hash_password(password))
+        user = User(
+            email=email,
+            hashed_password=hash_password(password),
+            first_name=first_name,
+            last_name=last_name
+        )
         return await user_repo.create(db, user)
 
     async def login(self, db: AsyncSession, email: str, password: str):
