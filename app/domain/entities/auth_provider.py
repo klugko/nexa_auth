@@ -20,9 +20,9 @@ class AuthProvider(Base):
     provider_user_id: Mapped[str] = mapped_column(String(255), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    auth_providers = relationship("AuthProvider", back_populates="user")
+    user = relationship("User", back_populates="auth_providers")

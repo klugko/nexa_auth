@@ -1,6 +1,14 @@
 from datetime import datetime, timedelta
 from jose import jwt
 from app.config import settings
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.infrastructure.db.session import get_db
+from app.infrastructure.repositories.user_repository_impl import UserRepositoryImpl
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/v1/login")
+
 
 class JWTService:
     def __init__(self):
@@ -25,3 +33,22 @@ class JWTService:
 
     def decode_token(self, token: str):
         return jwt.decode(token, self.public_key, algorithms=[settings.jwt_algorithm])
+
+    async def get_current_user(
+            self,
+            token: str = Depends(oauth2_scheme),
+            db: AsyncSession = Depends(get_db)
+    ):
+        try:
+            payload = self.decode_token(token)
+            user_id: str = payload.get("sub")
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Token invalide")
+            user = await UserRepositoryImpl().get_by_id(db, int(user_id))
+            if not user:
+                raise HTTPException(status_code=404, detail="Utilisateur introuvable")
+            return user
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(status_code=401, detail="Token invalide ou expiré")

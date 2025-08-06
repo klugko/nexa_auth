@@ -22,4 +22,4 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    auth_providers = relationship("AuthProvider", back_populates="user")
+    auth_providers = relationship("AuthProvider", back_populates="user", cascade="all, delete-orphan")
