@@ -9,6 +9,7 @@ from app.presentation.exception_handlers import register_exception_handlers
 from app.presentation.api.v1 import user_routes
 from app.presentation.api.v1 import rbac_routes
 from app.presentation.api.v1 import admin_user_roles_routes
+from app.presentation.api.v1 import admin_users_crud_routes
 
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
@@ -31,6 +32,7 @@ app.include_router(well_known_routes.router)
 app.include_router(user_routes.router) 
 app.include_router(rbac_routes.router)
 app.include_router(admin_user_roles_routes.router)
+app.include_router(admin_users_crud_routes.router)
     
 # Exceptions
 register_exception_handlers(app)

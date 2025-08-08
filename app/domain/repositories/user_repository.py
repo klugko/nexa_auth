@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.entities.user import User
@@ -20,4 +20,22 @@ class UserRepository:
         raise NotImplementedError
 
     async def update_avatar_url(self, db: AsyncSession, user: User, avatar_url: str) -> User:
+        raise NotImplementedError
+    
+    async def list_paginated(
+        self,
+        db: AsyncSession,
+        *,
+        keyword: Optional[str],
+        page: int,
+        size: int,
+        sort_by: str,
+        sort_dir: str,
+    ) -> Tuple[List[User], int]:
+        raise NotImplementedError
+
+    async def update_admin(self, db: AsyncSession, user: User, **fields) -> User:
+        raise NotImplementedError
+
+    async def delete_by_id(self, db: AsyncSession, user_id: UUID) -> bool:
         raise NotImplementedError
