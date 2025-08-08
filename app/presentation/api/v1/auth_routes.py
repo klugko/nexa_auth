@@ -1,7 +1,7 @@
 from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
 from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUseCases
 from app.application.use_cases.user_use_case import UserUseCases
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.db.session import get_db
@@ -14,6 +14,8 @@ from app.domain.entities.user import User
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.presentation.schemas.validate_schema import TokenValidationResponse
 from app.infrastructure.security.jwt_service import JWTService
+from app.application.use_cases.password_reset_use_cases import PasswordResetUseCases
+from app.presentation.schemas.password_reset_schema import PasswordForgotRequest, PasswordResetRequest, MessageResponse as PwdMessageResponse
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
@@ -22,6 +24,7 @@ auth_use_case = AuthUseCases()
 google_use_case = GoogleOAuthUseCases()
 apple_use_case = AppleOAuthUseCases() 
 ms_use_case = MicrosoftOAuthUseCases()
+pwd_uc = PasswordResetUseCases()
 
 bearer = HTTPBearer(auto_error=False) 
 jwt_service = JWTService()
@@ -151,3 +154,18 @@ async def validate_token(creds: HTTPAuthorizationCredentials = Depends(bearer), 
         )
     except Exception:
         return TokenValidationResponse(valid=False, message="Token invalide")
+
+
+@router.post("/password/forgot", response_model=PwdMessageResponse, summary="Start password reset flow (email)")
+async def password_forgot(data: PasswordForgotRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await pwd_uc.request_reset(db, data.email, ip, ua)
+    return {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
+
+@router.post("/password/reset", response_model=PwdMessageResponse, summary="Confirm password reset with token")
+async def password_reset(data: PasswordResetRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await pwd_uc.confirm_reset(db, data.token, data.new_password, ip, ua)
+    return {"message": "Mot de passe réinitialisé avec succès."}
