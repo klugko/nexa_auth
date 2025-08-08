@@ -21,3 +21,10 @@ class RefreshRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+class GoogleAuthURLResponse(BaseModel):
+    authorization_url: str
+
+class GoogleCallbackQuery(BaseModel):
+    code: str
+    state: str

@@ -33,3 +33,16 @@ class JWTService:
 
     def decode_token(self, token: str):
         return jwt.decode(token, self.public_key, algorithms=[settings.jwt_algorithm])
+    
+    def create_state_token(self, purpose: str, ttl_seconds: int = 60) -> str:
+        to_encode = {
+            "purpose": purpose,
+            "iat": datetime.utcnow(),
+            "exp": datetime.utcnow() + timedelta(seconds=ttl_seconds),
+        }
+        return jwt.encode(to_encode, self.private_key, algorithm=settings.jwt_algorithm)
+
+    def verify_state_token(self, token: str, expected_purpose: str) -> None:
+        payload = jwt.decode(token, self.public_key, algorithms=[settings.jwt_algorithm])
+        if payload.get("purpose") != expected_purpose:
+            raise ValueError("Invalid state purpose")
