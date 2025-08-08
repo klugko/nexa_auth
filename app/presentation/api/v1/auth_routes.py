@@ -19,6 +19,7 @@ google_use_case = GoogleOAuthUseCases()
 apple_use_case = AppleOAuthUseCases() 
 ms_use_case = MicrosoftOAuthUseCases() 
 
+
 @router.post("/register", response_model=MessageResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await auth_use_case.register(db, data.email, data.password)
@@ -60,7 +61,6 @@ async def google_redirect(
     data = await google_use_case.handle_callback(db, code, state)
     return data
 
-
 # --- Apple OAuth2 ---
 @router.get("/apple/login")
 async def apple_login():
@@ -81,7 +81,6 @@ async def apple_redirect(
     """
     data = await apple_use_case.handle_callback(db, code, state)
     return data
-
 
 # --- Microsoft OAuth2 ---
 @router.get("/microsoft/login")
@@ -104,8 +103,6 @@ async def microsoft_redirect(
     """
     data = await ms_use_case.handle_callback(db, code, state)
     return data
-
-
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
