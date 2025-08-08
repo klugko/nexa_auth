@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     avatar_max_width: int = int(os.getenv("AVATAR_MAX_WIDTH", 2048))
     avatar_max_height: int = int(os.getenv("AVATAR_MAX_HEIGHT", 2048))
     
+    # Invitations
+    invitation_expire_minutes: int = int(os.getenv("INVITATION_EXPIRE_MINUTES", 1440))
+    invitation_rate_window_seconds: int = int(os.getenv("INVITATION_RATE_WINDOW_SECONDS", 900))
+    invitation_rate_max_per_key: int = int(os.getenv("INVITATION_RATE_MAX_PER_KEY", 5))
+    frontend_accept_invite_url: str = os.getenv("FRONTEND_ACCEPT_INVITE_URL", "http://localhost:3000/accept-invite")
+    
     
     @property
     def database_url(self):
