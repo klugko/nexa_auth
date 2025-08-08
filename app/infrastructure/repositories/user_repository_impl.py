@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.domain.entities.user import User
 from app.domain.repositories.user_repository import UserRepository
 
@@ -13,6 +14,14 @@ class UserRepositoryImpl(UserRepository):
 
     async def get_by_id(self, db: AsyncSession, user_id: UUID):
         result = await db.execute(select(User).where(User.id == user_id))
+        return result.scalars().first()
+    
+    async def get_by_id(self, db: AsyncSession, user_id: UUID):
+        result = await db.execute(
+            select(User)
+            .options(selectinload(User.roles))  
+            .where(User.id == user_id)
+        )
         return result.scalars().first()
 
     async def create(self, db: AsyncSession, user: User):

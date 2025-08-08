@@ -5,6 +5,8 @@ from sqlalchemy import String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.db.base import Base
+from app.domain.entities.role import user_roles, Role
+
 
 class User(Base):
     """
@@ -26,6 +28,7 @@ class User(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)        
     position: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)    
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)  
+    roles = relationship("Role", secondary=user_roles, back_populates="users")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     auth_providers = relationship("AuthProvider", back_populates="user", cascade="all, delete-orphan")
