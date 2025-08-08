@@ -78,6 +78,13 @@ class Settings(BaseSettings):
     invitation_rate_max_per_key: int = int(os.getenv("INVITATION_RATE_MAX_PER_KEY", 5))
     frontend_accept_invite_url: str = os.getenv("FRONTEND_ACCEPT_INVITE_URL", "http://localhost:3000/accept-invite")
     
+    #otp
+    phone_otp_expire_minutes: int = int(os.getenv("PHONE_OTP_EXPIRE_MINUTES", 10))
+    phone_otp_rate_window_seconds: int = int(os.getenv("PHONE_OTP_RATE_WINDOW_SECONDS", 900))
+    phone_otp_rate_max_per_key: int = int(os.getenv("PHONE_OTP_RATE_MAX_PER_KEY", 5))
+    phone_otp_verify_rate_max_per_key: int = int(os.getenv("PHONE_OTP_VERIFY_RATE_MAX_PER_KEY", 10))
+    sms_provider: str = os.getenv("SMS_PROVIDER", "console")
+    sms_sender_id: str = os.getenv("SMS_SENDER_ID", "NEXA")
     
     @property
     def database_url(self):

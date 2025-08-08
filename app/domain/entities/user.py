@@ -30,6 +30,7 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)  
     roles = relationship("Role", secondary=user_roles, back_populates="users")
     refresh_revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True) 
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)  # NEW
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     auth_providers = relationship("AuthProvider", back_populates="user", cascade="all, delete-orphan")

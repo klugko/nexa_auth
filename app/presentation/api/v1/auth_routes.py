@@ -1,7 +1,9 @@
 from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
 from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUseCases
+from app.application.use_cases.phone_verification_use_cases import PhoneVerificationUseCases
 from app.application.use_cases.user_profile_use_cases import UserProfileUseCases
 from app.application.use_cases.user_use_case import UserUseCases
+from app.presentation.schemas.phone_verification_schema import PhoneVerifyRequest, PhoneVerifyResponse
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +36,7 @@ ms_use_case = MicrosoftOAuthUseCases()
 pwd_uc = PasswordResetUseCases()
 email_verify_uc = EmailVerificationUseCases()
 uc = UserProfileUseCases()
+phone_uc = PhoneVerificationUseCases()
 
 bearer = HTTPBearer(auto_error=False) 
 jwt_service = JWTService()
@@ -127,6 +130,7 @@ async def microsoft_redirect(
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+# activer/désactiver compte
 @router.get(
     "/validate-token",
     response_model=TokenValidationResponse,
@@ -164,7 +168,7 @@ async def validate_token(creds: HTTPAuthorizationCredentials = Depends(bearer), 
     except Exception:
         return TokenValidationResponse(valid=False, message="Token invalide")
 
-
+# reset password
 @router.post("/password/forgot", response_model=PwdMessageResponse, summary="Start password reset flow (email)")
 async def password_forgot(data: PasswordForgotRequest, request: Request, db: AsyncSession = Depends(get_db)):
     ip = request.client.host if request.client else None
@@ -198,6 +202,7 @@ async def email_verify(data: EmailVerificationConfirmRequest, request: Request, 
 async def get_me(current_user: User = Depends(get_current_user)):
     return await uc.get_me(current_user)
 
+# update profile
 @router.put("/me", response_model=UserResponse, summary="Update my profile")
 async def update_me(data: UserUpdateMeRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = await uc.update_me(db, current_user,
@@ -216,3 +221,17 @@ async def upload_avatar(
     raw = await file.read()
     avatar_url = await uc.update_avatar(db, current_user, raw_bytes=raw)
     return current_user
+
+# otp
+@router.post("/phone/send-otp", response_model=PhoneSendOtpResponse, summary="Envoyer OTP par SMS (auth)")
+async def phone_send_otp(request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await phone_uc.send_otp(db, user=current_user, ip=ip, ua=ua)
+    return {"message": "Si un numéro est associé, un code a été envoyé par SMS."}
+
+@router.post("/phone/verify", response_model=PhoneVerifyResponse, summary="Vérifier OTP SMS (auth)")
+async def phone_verify(data: PhoneVerifyRequest, request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ip = request.client.host if request.client else None
+    await phone_uc.verify_otp(db, user=current_user, code=data.code, ip=ip)
+    return {"message": "Téléphone vérifié avec succès.", "phone_verified": True}
