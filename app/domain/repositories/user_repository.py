@@ -12,3 +12,6 @@ class UserRepository:
 
     async def create(self, db: AsyncSession, user: User) -> User:
         raise NotImplementedError
+    
+    async def set_email_verified(self, db: AsyncSession, user_id, verified: bool) -> None:
+        raise NotImplementedError

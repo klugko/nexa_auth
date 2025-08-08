@@ -16,6 +16,12 @@ from app.presentation.schemas.validate_schema import TokenValidationResponse
 from app.infrastructure.security.jwt_service import JWTService
 from app.application.use_cases.password_reset_use_cases import PasswordResetUseCases
 from app.presentation.schemas.password_reset_schema import PasswordForgotRequest, PasswordResetRequest, MessageResponse as PwdMessageResponse
+from app.application.use_cases.email_verification_use_cases import EmailVerificationUseCases
+from app.presentation.schemas.email_verification_schema import (
+    EmailVerificationSendRequest,
+    EmailVerificationConfirmRequest,
+    MessageResponse as EmailVerifyMessageRespon)
+
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
@@ -25,6 +31,7 @@ google_use_case = GoogleOAuthUseCases()
 apple_use_case = AppleOAuthUseCases() 
 ms_use_case = MicrosoftOAuthUseCases()
 pwd_uc = PasswordResetUseCases()
+email_verify_uc = EmailVerificationUseCases()
 
 bearer = HTTPBearer(auto_error=False) 
 jwt_service = JWTService()
@@ -169,3 +176,17 @@ async def password_reset(data: PasswordResetRequest, request: Request, db: Async
     ua = request.headers.get("user-agent")
     await pwd_uc.confirm_reset(db, data.token, data.new_password, ip, ua)
     return {"message": "Mot de passe réinitialisé avec succès."}
+
+@router.post("/email/send-verification", response_model=EmailVerifyMessageRespon, summary="Send email verification link")
+async def email_send_verification(data: EmailVerificationSendRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await email_verify_uc.send_verification(db, data.email, ip, ua)
+    return {"message": "Si un compte existe pour cet email, un lien de vérification a été envoyé."}
+
+@router.post("/email/verify", response_model=EmailVerifyMessageRespon, summary="Confirm email verification with token")
+async def email_verify(data: EmailVerificationConfirmRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await email_verify_uc.confirm_verification(db, data.token, ip, ua)
+    return {"message": "Adresse email vérifiée avec succès."}

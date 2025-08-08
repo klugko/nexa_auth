@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     password_reset_rate_max_per_key: int = int(os.getenv("PASSWORD_RESET_RATE_MAX_PER_KEY", 5))
     frontend_reset_password_url: str = os.getenv("FRONTEND_RESET_PASSWORD_URL", "http://localhost:3000/reset-password")
 
+    # Email verification
+    email_verification_token_expire_minutes: int = int(os.getenv("EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES", 60))
+    email_verification_rate_window_seconds: int = int(os.getenv("EMAIL_VERIFICATION_RATE_WINDOW_SECONDS", 900))
+    email_verification_rate_max_per_key: int = int(os.getenv("EMAIL_VERIFICATION_RATE_MAX_PER_KEY", 5))
+    frontend_verify_email_url: str = os.getenv("FRONTEND_VERIFY_EMAIL_URL", "http://localhost:3000/verify-email")
+    
     @property
     def database_url(self):
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
