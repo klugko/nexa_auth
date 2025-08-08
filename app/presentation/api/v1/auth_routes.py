@@ -1,5 +1,6 @@
 from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
 from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUseCases
+from app.application.use_cases.user_profile_use_cases import UserProfileUseCases
 from app.application.use_cases.user_use_case import UserUseCases
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from fastapi.responses import RedirectResponse
@@ -32,6 +33,7 @@ apple_use_case = AppleOAuthUseCases()
 ms_use_case = MicrosoftOAuthUseCases()
 pwd_uc = PasswordResetUseCases()
 email_verify_uc = EmailVerificationUseCases()
+uc = UserProfileUseCases()
 
 bearer = HTTPBearer(auto_error=False) 
 jwt_service = JWTService()
@@ -190,3 +192,27 @@ async def email_verify(data: EmailVerificationConfirmRequest, request: Request, 
     ua = request.headers.get("user-agent")
     await email_verify_uc.confirm_verification(db, data.token, ip, ua)
     return {"message": "Adresse email vérifiée avec succès."}
+
+
+@router.get("/me", response_model=UserResponse, summary="Get my profile")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return await uc.get_me(current_user)
+
+@router.put("/me", response_model=UserResponse, summary="Update my profile")
+async def update_me(data: UserUpdateMeRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = await uc.update_me(db, current_user,
+                              first_name=data.first_name,
+                              last_name=data.last_name,
+                              phone=data.phone,
+                              position=data.position)
+    return user
+
+@router.post("/me/avatar", response_model=UserResponse, summary="Upload my avatar")
+async def upload_avatar(
+    file: UploadFile = File(..., description="PNG/JPEG/WEBP image"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    raw = await file.read()
+    avatar_url = await uc.update_avatar(db, current_user, raw_bytes=raw)
+    return current_user

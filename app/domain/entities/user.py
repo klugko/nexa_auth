@@ -23,6 +23,9 @@ class User(Base):
     last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False) 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)        
+    position: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)    
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)  
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     auth_providers = relationship("AuthProvider", back_populates="user", cascade="all, delete-orphan")

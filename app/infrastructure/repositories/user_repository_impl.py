@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
@@ -23,3 +24,22 @@ class UserRepositoryImpl(UserRepository):
     async def set_email_verified(self, db: AsyncSession, user_id, verified: bool) -> None:
         await db.execute(update(User).where(User.id == user_id).values(email_verified=verified))
         await db.commit()
+
+    async def update_profile(self, db: AsyncSession, user: User, *, first_name: Optional[str], last_name: Optional[str], phone: Optional[str], position: Optional[str]) -> User:
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+        if phone is not None:
+            user.phone = phone
+        if position is not None:
+            user.position = position
+        await db.commit()
+        await db.refresh(user)
+        return user
+
+    async def update_avatar_url(self, db: AsyncSession, user: User, avatar_url: str) -> User:
+        user.avatar_url = avatar_url
+        await db.commit()
+        await db.refresh(user)
+        return user

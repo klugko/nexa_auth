@@ -60,6 +60,19 @@ class Settings(BaseSettings):
     email_verification_rate_max_per_key: int = int(os.getenv("EMAIL_VERIFICATION_RATE_MAX_PER_KEY", 5))
     frontend_verify_email_url: str = os.getenv("FRONTEND_VERIFY_EMAIL_URL", "http://localhost:3000/verify-email")
     
+     # Storage
+    storage_backend: str = os.getenv("STORAGE_BACKEND", "local")
+    storage_local_dir: str = os.getenv("STORAGE_LOCAL_DIR", "var/avatars")
+    storage_public_base_path: str = os.getenv("STORAGE_PUBLIC_BASE_PATH", "/static/avatars")
+
+    # Avatar policy
+    avatar_max_bytes: int = int(os.getenv("AVATAR_MAX_BYTES", 5 * 1024 * 1024))
+    avatar_min_width: int = int(os.getenv("AVATAR_MIN_WIDTH", 64))
+    avatar_min_height: int = int(os.getenv("AVATAR_MIN_HEIGHT", 64))
+    avatar_max_width: int = int(os.getenv("AVATAR_MAX_WIDTH", 2048))
+    avatar_max_height: int = int(os.getenv("AVATAR_MAX_HEIGHT", 2048))
+    
+    
     @property
     def database_url(self):
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
