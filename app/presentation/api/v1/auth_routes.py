@@ -1,3 +1,4 @@
+from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +15,8 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 
 auth_use_case = AuthUseCases()
 google_use_case = GoogleOAuthUseCases()
+apple_use_case = AppleOAuthUseCases() 
 
-# --- Local auth endpoints (déjà existants mais avec nouveau prefix) ---
 @router.post("/register", response_model=MessageResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await auth_use_case.register(db, data.email, data.password)
@@ -57,6 +58,33 @@ async def google_redirect(
     data = await google_use_case.handle_callback(db, code, state)
     return data
 
+
+# --- Apple OAuth2 ---
+@router.get("/apple/login")
+async def apple_login():
+    """
+    Redirects to Apple's consent screen.
+    """
+    url = apple_use_case.get_login_url()
+    return RedirectResponse(url)
+
+@router.get("/apple/redirect")
+async def apple_redirect(
+    code: str = Query(..., description="Authorization code from Apple"),
+    state: str = Query(..., description="Opaque state for CSRF protection"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Apple OAuth2 callback: exchanges code for tokens and returns our local JWTs.
+    """
+    data = await apple_use_case.handle_callback(db, code, state)
+    return data
+
+
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+

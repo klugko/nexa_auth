@@ -24,6 +24,18 @@ class Settings(BaseSettings):
     google_client_id: str = os.getenv("GOOGLE_CLIENT_ID", "")
     google_client_secret: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
     google_callback_url: str = os.getenv("GOOGLE_CALLBACK_URL", "")
+    
+    apple_client_id: str = os.getenv("APPLE_CLIENT_ID", "")
+    apple_team_id: str = os.getenv("APPLE_TEAM_ID", "")
+    apple_key_id: str = os.getenv("APPLE_KEY_ID", "")
+    apple_private_key_path: str = os.getenv("APPLE_PRIVATE_KEY_PATH", "")
+    apple_private_key: str = os.getenv("APPLE_PRIVATE_KEY", "")
+    apple_callback_url: str = os.getenv("APPLE_CALLBACK_URL", "")
+    
+    microsoft_client_id: str = os.getenv("MICROSOFT_CLIENT_ID", "")
+    microsoft_client_secret: str = os.getenv("MICROSOFT_CLIENT_SECRET", "")
+    microsoft_tenant_id: str = os.getenv("MICROSOFT_TENANT_ID", "common")
+    microsoft_callback_url: str = os.getenv("MICROSOFT_CALLBACK_URL", "")
 
     @property
     def database_url(self):
