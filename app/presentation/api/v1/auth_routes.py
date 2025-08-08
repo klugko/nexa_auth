@@ -2,7 +2,7 @@ from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
 from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUseCases
 from app.application.use_cases.user_profile_use_cases import UserProfileUseCases
 from app.application.use_cases.user_use_case import UserUseCases
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.db.session import get_db
@@ -10,7 +10,7 @@ from app.presentation.schemas.auth_schema import RegisterRequest, LoginRequest, 
 from app.application.use_cases.auth_use_cases import AuthUseCases
 from app.application.use_cases.google_oauth_use_cases import GoogleOAuthUseCases
 from app.presentation.deps.current_user import get_current_user
-from app.presentation.schemas.user_schema import UserResponse
+from app.presentation.schemas.user_schema import UserResponse, UserUpdateMeRequest
 from app.domain.entities.user import User
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.presentation.schemas.validate_schema import TokenValidationResponse
