@@ -1,6 +1,7 @@
 from typing import Optional, List
 from uuid import UUID
 
+from app.application.use_cases.dmin_user_status_use_cases import AdminUserStatusUseCases
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,7 @@ router = APIRouter(
 )
 
 uc = AdminUserUseCases()
+status_uc = AdminUserStatusUseCases()
 
 def _to_out(u) -> AdminUserOut:
     return AdminUserOut(
@@ -99,3 +101,13 @@ async def update_user(user_id: UUID, data: AdminUserUpdate, db: AsyncSession = D
 async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     await uc.delete_user(db, user_id=user_id)
     return
+
+@router.post("/{user_id}/activate", response_model=AdminUserOut, summary="Activer un utilisateur (admin)")
+async def activate_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
+    u = await status_uc.activate(db, user_id)
+    return _to_out(u)
+
+@router.post("/{user_id}/deactivate", response_model=AdminUserOut, summary="Désactiver un utilisateur + invalider refresh tokens (admin)")
+async def deactivate_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
+    u = await status_uc.deactivate(db, user_id)
+    return _to_out(u)

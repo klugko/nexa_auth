@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 
 from fastapi import HTTPException, status
 from app.infrastructure.security.password_hash import hash_password, verify_password
@@ -45,15 +46,27 @@ class AuthUseCases:
         except Exception:
             raise HTTPException(status_code=500, detail="Erreur interne lors de la déconnexion")
         
-        
     async def refresh(self, db: AsyncSession, refresh_token: str):
-        if await blacklist_repo.exists(db, refresh_token):
-            raise HTTPException(status_code=401, detail="Token invalide")
         try:
             payload = jwt_service.decode_token(refresh_token)
-            user_id = payload.get("sub")
-            if not user_id:
-                raise HTTPException(status_code=401, detail="Token invalide")
-            return jwt_service.create_access_token(user_id)
         except Exception:
-            raise HTTPException(status_code=401, detail="Token invalide")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token invalide")
+
+        sub = payload.get("sub")
+        iat = payload.get("iat") 
+        if not sub or not iat:
+            raise HTTPException(status_code=401, detail="Refresh token invalide")
+
+        from uuid import UUID
+        user = await user_repo.get_by_id(db, UUID(sub))
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="Utilisateur inactif")
+
+        rra = getattr(user, "refresh_revoked_at", None)
+        if rra is not None:
+            if isinstance(rra, datetime):
+                if iat <= int(rra.timestamp()):
+                    raise HTTPException(status_code=401, detail="Refresh token révoqué")
+        new_access = jwt_service.create_access_token(str(user.id))
+        new_refresh = jwt_service.create_refresh_token(str(user.id))
+        return {"access_token": new_access, "refresh_token": new_refresh, "token_type": "bearer"}

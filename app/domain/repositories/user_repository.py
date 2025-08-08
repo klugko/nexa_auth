@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,4 +39,10 @@ class UserRepository:
         raise NotImplementedError
 
     async def delete_by_id(self, db: AsyncSession, user_id: UUID) -> bool:
+        raise NotImplementedError
+
+    async def set_active(self, db: AsyncSession, user: User, active: bool) -> User:
+        raise NotImplementedError
+
+    async def revoke_refresh_now(self, db: AsyncSession, user: User) -> User:
         raise NotImplementedError

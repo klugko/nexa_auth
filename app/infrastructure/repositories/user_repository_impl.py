@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -116,4 +117,17 @@ class UserRepositoryImpl(UserRepository):
         await db.delete(u)
         await db.commit()
         return True
+    
+    async def set_active(self, db: AsyncSession, user: User, active: bool) -> User:
+        user.is_active = active
+        if not active:
+            user.refresh_revoked_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(user)
+        return user
 
+    async def revoke_refresh_now(self, db: AsyncSession, user: User) -> User:
+        user.refresh_revoked_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(user)
+        return user
