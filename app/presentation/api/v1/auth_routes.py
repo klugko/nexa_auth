@@ -1,4 +1,5 @@
 from app.application.use_cases.apple_oauth_use_cases import AppleOAuthUseCases
+from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUseCases
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
 auth_use_case = AuthUseCases()
 google_use_case = GoogleOAuthUseCases()
 apple_use_case = AppleOAuthUseCases() 
+ms_use_case = MicrosoftOAuthUseCases() 
 
 @router.post("/register", response_model=MessageResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
@@ -80,6 +82,28 @@ async def apple_redirect(
     data = await apple_use_case.handle_callback(db, code, state)
     return data
 
+
+# --- Microsoft OAuth2 ---
+@router.get("/microsoft/login")
+async def microsoft_login():
+    """
+    Redirects to Microsoft's consent screen (MS Identity Platform).
+    """
+    url = ms_use_case.get_login_url()
+    return RedirectResponse(url)
+
+@router.get("/microsoft/redirect")
+async def microsoft_redirect(
+    code: str = Query(..., description="Authorization code from Microsoft"),
+    state: str = Query(..., description="Opaque state for CSRF protection"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Microsoft OAuth2 callback: exchanges code for tokens, verifies id_token via JWKS,
+    validates access_token by calling Graph /me, then returns local JWTs.
+    """
+    data = await ms_use_case.handle_callback(db, code, state)
+    return data
 
 
 
