@@ -1,11 +1,11 @@
+from app.application.use_cases.resume_use_cases import ResumeUseCases
+from app.presentation.schemas.resume_schema import SkillsResponse
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.session import get_db
 from app.presentation.deps.current_user import get_current_user
 from app.domain.entities.user import User
-from app.application.use_cases.resume_use_cases import ResumeUseCases
-from app.presentation.schemas.resume_schema import SkillsResponse
 
 router = APIRouter(prefix="/api/v1/users/me", tags=["Users • Resume/Skills"])
 uc = ResumeUseCases()

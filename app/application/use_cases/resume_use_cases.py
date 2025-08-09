@@ -40,12 +40,43 @@ class ResumeUseCases:
         if not text:
             raise HTTPException(status_code=400, detail="Impossible d'extraire du texte du CV")
 
-        skills = await parser.extract_skills(text)  
-        await skill_repo.upsert_bulk(db, user.id, skills)
+        enriched = await parser.extract_skills(text)  # list[dict]
+        await skill_repo.upsert_bulk(db, user.id, enriched)
         await resume_repo.set_parsed_now(db, resume)
 
-        return [{"skill": s, "score": sc} for (s, sc) in skills]
+        def months_to_years(m):
+            if m is None: return None
+            return round(m / 12.0, 1)
+
+        return [
+            {
+                "skill": it["name"],
+                "score": it["score"],
+                "category": it.get("category"),
+                "years_experience": months_to_years(it.get("years_experience_months")),
+                "seniority": it.get("seniority"),
+                "confidence": it.get("confidence"),
+                "last_used_year": it.get("last_used_year"),
+            }
+            for it in enriched
+        ]
 
     async def list_my_skills(self, db: AsyncSession, *, user):
         items = await skill_repo.list_for_user(db, user.id)
-        return [{"skill": it.skill, "score": it.score} for it in items]
+
+        def months_to_years(m):
+            if m is None: return None
+            return round(m / 12.0, 1)
+
+        return [
+            {
+                "skill": it.skill,
+                "score": it.score,
+                "category": it.category,
+                "years_experience": months_to_years(it.years_experience_months),
+                "seniority": it.seniority,
+                "confidence": it.confidence,
+                "last_used_year": it.last_used_year,
+            }
+            for it in items
+        ]
