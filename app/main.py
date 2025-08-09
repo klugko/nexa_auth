@@ -4,7 +4,7 @@ from fastapi.openapi.utils import get_openapi
 import os
 from starlette.staticfiles import StaticFiles
 from app.config import settings
-from app.presentation.api.v1 import auth_routes, user_resume_routes, well_known_routes
+from app.presentation.api.v1 import auth_routes, user_resume_routes, user_skill_summary_routes, well_known_routes
 from app.presentation.exception_handlers import register_exception_handlers
 from app.presentation.api.v1 import user_routes
 from app.presentation.api.v1 import rbac_routes
@@ -36,6 +36,7 @@ app.include_router(admin_user_roles_routes.router)
 app.include_router(admin_users_crud_routes.router)
 app.include_router(invitations_routes.router)
 app.include_router(user_resume_routes.router)
+app.include_router(user_skill_summary_routes.router)
 
 # Exceptions
 register_exception_handlers(app)
