@@ -86,11 +86,21 @@ class Settings(BaseSettings):
     sms_provider: str = os.getenv("SMS_PROVIDER", "console")
     sms_sender_id: str = os.getenv("SMS_SENDER_ID", "NEXA")
     
-    
+    #cv
     resumes_local_dir: str = os.getenv("RESUMES_LOCAL_DIR", "var/resumes")
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    
+    #scoring
+    scoring_w_email_verified: float = float(os.getenv("SCORING_W_EMAIL_VERIFIED", 0.20))
+    scoring_w_phone_verified: float = float(os.getenv("SCORING_W_PHONE_VERIFIED", 0.15))
+    scoring_w_profile_completion: float = float(os.getenv("SCORING_W_PROFILE_COMPLETION", 0.20))
+    scoring_w_skills: float = float(os.getenv("SCORING_W_SKILLS", 0.35))
+    scoring_w_activity: float = float(os.getenv("SCORING_W_ACTIVITY", 0.10))
+
+    scoring_activity_half_life_days: int = int(os.getenv("SCORING_ACTIVITY_HALF_LIFE_DAYS", 180))
+    scoring_skills_count_cap: int = int(os.getenv("SCORING_SKILLS_COUNT_CAP", 20))
     
     @property
     def database_url(self):

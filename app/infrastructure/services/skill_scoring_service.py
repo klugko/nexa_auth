@@ -56,7 +56,7 @@ class SkillScoringService:
         - proficiency (score)
         - expérience (boost)
         - récence (exponentiel)
-        - confidence (0.5..1.0)
+        - confidence (0.5..1.0) 
         Retourne aussi la 'family' calculée.
         """
         prof = max(0, min(100, int(score))) / 100.0
