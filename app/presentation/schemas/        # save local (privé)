@@ -1,0 +1,9 @@
+from pydantic import BaseModel
+from typing import List
+
+class SkillOut(BaseModel):
+    skill: str
+    score: int
+
+class SkillsResponse(BaseModel):
+    items: List[SkillOut]

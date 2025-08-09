@@ -3,7 +3,7 @@ from app.application.use_cases.microsoft_oauth_use_cases import MicrosoftOAuthUs
 from app.application.use_cases.phone_verification_use_cases import PhoneVerificationUseCases
 from app.application.use_cases.user_profile_use_cases import UserProfileUseCases
 from app.application.use_cases.user_use_case import UserUseCases
-from app.presentation.schemas.phone_verification_schema import PhoneVerifyRequest, PhoneVerifyResponse
+from app.presentation.schemas.phone_verification_schema import PhoneSendOtpResponse, PhoneVerifyRequest, PhoneVerifyResponse
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession

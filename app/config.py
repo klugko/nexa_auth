@@ -86,6 +86,12 @@ class Settings(BaseSettings):
     sms_provider: str = os.getenv("SMS_PROVIDER", "console")
     sms_sender_id: str = os.getenv("SMS_SENDER_ID", "NEXA")
     
+    
+    resumes_local_dir: str = os.getenv("RESUMES_LOCAL_DIR", "var/resumes")
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    
     @property
     def database_url(self):
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
