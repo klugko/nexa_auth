@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     smtp_username: str = os.getenv("SMTP_USERNAME", "")
     smtp_password: str = os.getenv("SMTP_PASSWORD", "")
     smtp_from: str = os.getenv("SMTP_FROM", "[email protected]")
-    smtp_use_tls: int = int(os.getenv("SMTP_USE_TLS", 0))
+    smtp_use_tls: int = int(os.getenv("SMTP_USE_TLS", 1))
     smtp_use_ssl: int = int(os.getenv("SMTP_USE_SSL", 0))
 
     # Password reset

@@ -9,6 +9,13 @@ entities_to_import = [
     "app.domain.entities.user",
     "app.domain.entities.auth_provider",
     "app.domain.entities.black_listed_token",
+    "app.domain.entities.password_reset_token",
+    "app.domain.entities.role",
+    "app.domain.entities.invitation",
+    "app.domain.entities.verification_code",
+    "app.domain.entities.user_resume",
+    "app.domain.entities.user_skill",
+    "app.domain.entities.user_score",
 ]
 
 for entity_module in entities_to_import:

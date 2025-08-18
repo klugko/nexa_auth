@@ -23,6 +23,7 @@ import app.domain.entities.user_resume
 import app.domain.entities.user_skill
 import app.domain.entities.user_score
 import app.domain.entities.black_listed_token
+import app.domain.entities.password_reset_token
 
 config = context.config
 fileConfig(config.config_file_name)
