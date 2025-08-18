@@ -31,20 +31,16 @@ class AuthUseCases:
     async def login(self, db: AsyncSession, email: str, password: str):
         user = await user_repo.get_by_email(db, email)
         if not user or not verify_password(password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Email ou mot de passe invalide")
+            raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
         access_token = jwt_service.create_access_token(str(user.id))
         refresh_token = jwt_service.create_refresh_token(str(user.id))
         return access_token, refresh_token
-
     
     async def logout(self, db: AsyncSession, refresh_token: str):
         if not refresh_token:
             raise HTTPException(status_code=400, detail="Refresh token manquant")
-        try:
-            await blacklist_repo.add(db, refresh_token)
-            return {"message": "Déconnexion réussie"}
-        except Exception:
-            raise HTTPException(status_code=500, detail="Erreur interne lors de la déconnexion")
+        await blacklist_repo.add(db, refresh_token)
+        return {"message": "Déconnexion réussie"}
         
     async def refresh(self, db: AsyncSession, refresh_token: str):
         try:

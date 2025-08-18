@@ -62,6 +62,11 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-@app.get("/health")
+@app.get("/")
 async def health_check():
     return {"status": "ok", "app": settings.app_name, "version": settings.app_version}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "app": settings.app_name, "version": settings.app_version, "message": "app is running"}
+

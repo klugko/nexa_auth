@@ -40,7 +40,7 @@ class AdminUserOut(BaseModel):
     roles: List[str] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PaginatedUsers(BaseModel):
     page: int

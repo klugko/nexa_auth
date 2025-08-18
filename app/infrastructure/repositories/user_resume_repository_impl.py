@@ -14,6 +14,15 @@ class UserResumeRepositoryImpl(UserResumeRepository):
         await db.commit()
         await db.refresh(entity)
         return entity
+    
+    async def create_or_replace(self, db: AsyncSession, user_id: UUID, path: str) -> UserResume:
+        async with db.begin():
+            await db.execute(delete(UserResume).where(UserResume.user_id == user_id))
+            entity = UserResume(user_id=user_id, path=path, parsed_at=None)
+            db.add(entity)
+            await db.commit()
+            await db.refresh(entity)
+        return entity
 
     async def set_parsed_now(self, db: AsyncSession, resume: UserResume) -> None:
         resume.parsed_at = datetime.utcnow()

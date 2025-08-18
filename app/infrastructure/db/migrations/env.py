@@ -15,6 +15,15 @@ from app.domain.entities.user import User
 from app.domain.entities.auth_provider import AuthProvider
 from app.config import settings
 
+import app.domain.entities.user
+import app.domain.entities.role
+import app.domain.entities.invitation
+import app.domain.entities.verification_code
+import app.domain.entities.user_resume
+import app.domain.entities.user_skill
+import app.domain.entities.user_score
+import app.domain.entities.black_listed_token
+
 config = context.config
 fileConfig(config.config_file_name)
 

@@ -11,7 +11,6 @@ class UserScore(Base):
     Clé primaire = user_id (1-1).
     """
     __tablename__ = "user_scores"
-    __table_args__ = (UniqueConstraint("user_id", name="uq_user_scores_user"),)
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     score: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)  # 0..100

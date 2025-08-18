@@ -42,9 +42,16 @@ bearer = HTTPBearer(auto_error=False)
 jwt_service = JWTService()
 user_uc = UserUseCases()
 
+
 @router.post("/register", response_model=MessageResponse)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    await auth_use_case.register(db, data.email, data.password)
+    await auth_use_case.register(
+        db=db,
+        email=data.email,
+        password=data.password,
+        first_name=data.first_name,
+        last_name=data.last_name
+    )
     return {"message": "Inscription réussie"}
 
 @router.post("/login", response_model=TokenResponse)
@@ -54,8 +61,8 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    access_token = await auth_use_case.refresh(db, data.refresh_token)
-    return {"access_token": access_token, "refresh_token": data.refresh_token, "token_type": "bearer"}
+    tokens = await auth_use_case.refresh(db, data.refresh_token) 
+    return tokens  
 
 @router.post("/logout", response_model=MessageResponse)
 async def logout(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
