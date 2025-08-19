@@ -1,3 +1,5 @@
+import logging
+import logging.config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -70,3 +72,28 @@ async def health_check():
 async def health_check():
     return {"status": "ok", "app": settings.app_name, "version": settings.app_version, "message": "app is running"}
 
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {"format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s"}
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        }
+    },
+    "loggers": {
+        "": {  # root logger
+            "handlers": ["console"],
+            "level": "INFO",   
+        },
+        "uvicorn.error": {"level": "INFO"},
+        "uvicorn.access": {"level": "INFO"},
+        "aiosmtplib": {"level": "INFO"}, 
+        "app.email": {"level": "INFO"},
+    },
+}
+logging.config.dictConfig(LOGGING)

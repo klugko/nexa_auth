@@ -105,7 +105,6 @@ $RECYCLE.BIN/
 secrets.py
 *.key
 *.cert
-*.pem
 credentials.json
 *.csv
 *.json
