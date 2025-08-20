@@ -6,6 +6,7 @@ from fastapi.openapi.utils import get_openapi
 import os
 from starlette.staticfiles import StaticFiles
 from app.config import settings
+from app.infrastructure.middlewares.audit_middleware import AuditMiddleware
 from app.presentation.api.v1 import auth_routes, user_resume_routes, user_score_routes, user_skill_summary_routes, well_known_routes
 from app.presentation.exception_handlers import register_exception_handlers
 from app.presentation.api.v1 import user_routes
@@ -13,7 +14,8 @@ from app.presentation.api.v1 import rbac_routes
 from app.presentation.api.v1 import admin_user_roles_routes
 from app.presentation.api.v1 import admin_users_crud_routes
 from app.presentation.api.v1 import invitations_routes
-
+from app.infrastructure.services.audit_logger import audit_logger
+from app.presentation.api.v1 import audit_routes
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
 
@@ -23,11 +25,23 @@ app.mount(settings.storage_public_base_path, StaticFiles(directory=settings.stor
 # CORS 
 app.add_middleware(
     CORSMiddleware,
+    AuditMiddleware,
+
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Lifecycle: audit worker
+@app.on_event("startup")
+async def _audit_start():
+    await audit_logger.start()
+
+@app.on_event("shutdown")
+async def _audit_stop():
+    await audit_logger.stop()
 
 # Routers
 app.include_router(auth_routes.router)         
@@ -40,6 +54,7 @@ app.include_router(invitations_routes.router)
 app.include_router(user_resume_routes.router)
 app.include_router(user_skill_summary_routes.router)
 app.include_router(user_score_routes.router)
+app.include_router(audit_routes.router)
 
 # Exceptions
 register_exception_handlers(app)
