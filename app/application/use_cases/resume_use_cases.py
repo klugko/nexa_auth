@@ -1,4 +1,6 @@
 import os
+import aiofiles
+
 import time
 from typing import List, Tuple
 from fastapi import HTTPException, status
@@ -30,8 +32,8 @@ class ResumeUseCases:
         safe_name = f"{user.id}_{ts}{os.path.splitext(filename)[1].lower()}"
         abs_path = os.path.join(settings.resumes_local_dir, safe_name)
         tmp_path = abs_path + ".tmp"
-        with open(tmp_path, "wb") as f:
-            f.write(raw)
+        async with aiofiles.open(tmp_path, "wb") as f:
+            await f.write(raw)
         os.replace(tmp_path, abs_path)
 
         resume = await resume_repo.create_or_replace(db, user.id, abs_path)
