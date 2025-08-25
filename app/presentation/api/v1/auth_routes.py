@@ -23,8 +23,7 @@ from app.application.use_cases.email_verification_use_cases import EmailVerifica
 from app.presentation.schemas.email_verification_schema import (
     EmailVerificationSendRequest,
     EmailVerificationConfirmRequest,
-    MessageResponse as EmailVerifyMessageRespon)
-
+    MessageResponse)
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
@@ -67,6 +66,116 @@ async def refresh(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
 @router.post("/logout", response_model=MessageResponse)
 async def logout(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
     return await auth_use_case.logout(db, data.refresh_token)
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+# activer/désactiver compte
+@router.get(
+    "/validate-token",
+    response_model=TokenValidationResponse,
+    summary="Validate JWT and return associated user",
+    description=(
+        "Public endpoint for other services to validate a JWT (RS256). "
+        "Provide the token via 'Authorization: Bearer <token>'."
+    ),
+)
+async def validate_token(creds: HTTPAuthorizationCredentials = Depends(bearer), db: AsyncSession = Depends(get_db)):
+    if not creds or creds.scheme.lower() != "bearer":
+        return TokenValidationResponse(valid=False, message="Token manquant")
+    token = creds.credentials
+    try:
+        payload = jwt_service.decode_token(token)
+        sub = payload.get("sub")
+        iat = payload.get("iat")
+        exp = payload.get("exp")
+        if not sub:
+            return TokenValidationResponse(valid=False, message="Claim 'sub' absent")
+
+        from uuid import UUID
+        user = await user_uc.get_by_id(db, UUID(sub))
+        if not user or not user.is_active:
+            return TokenValidationResponse(valid=False, sub=sub, iat=iat, exp=exp, message="Utilisateur inactif ou introuvable")
+
+        return TokenValidationResponse(
+            valid=True,
+            sub=sub,
+            iat=iat,
+            exp=exp,
+            user=user,
+            kid=jwt_service.kid,
+        )
+    except Exception:
+        return TokenValidationResponse(valid=False, message="Token invalide")
+
+# reset password
+@router.post("/password/forgot", response_model=PwdMessageResponse, summary="Start password reset flow (email)")
+async def password_forgot(data: PasswordForgotRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await pwd_uc.request_reset(db, data.email, ip, ua)
+    return {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
+
+@router.post("/password/reset", response_model=PwdMessageResponse, summary="Confirm password reset with token")
+async def password_reset(data: PasswordResetRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await pwd_uc.confirm_reset(db, data.token, data.new_password, ip, ua)
+    return {"message": "Mot de passe réinitialisé avec succès."}
+
+@router.post("/email/send-verification", response_model=MessageResponse, summary="Send email verification link")
+async def email_send_verification(data: EmailVerificationSendRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await email_verify_uc.send_verification(db, data.email, ip, ua)
+    return {"message": "Si un compte existe pour cet email, un lien de vérification a été envoyé."}
+
+@router.post("/email/verify", response_model=MessageResponse, summary="Confirm email verification with token")
+async def email_verify(data: EmailVerificationConfirmRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await email_verify_uc.confirm_verification(db, data.token, ip, ua)
+    return {"message": "Adresse email vérifiée avec succès."}
+
+
+@router.get("/me", response_model=UserResponse, summary="Get my profile")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return await uc.get_me(current_user)
+
+# update profile
+@router.put("/me", response_model=UserResponse, summary="Update my profile")
+async def update_me(data: UserUpdateMeRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = await uc.update_me(db, current_user,
+                              first_name=data.first_name,
+                              last_name=data.last_name,
+                              phone=data.phone,
+                              position=data.position)
+    return user
+
+@router.post("/me/avatar", response_model=UserResponse, summary="Upload my avatar")
+async def upload_avatar(
+    file: UploadFile = File(..., description="PNG/JPEG/WEBP image"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    raw = await file.read()
+    avatar_url = await uc.update_avatar(db, current_user, raw_bytes=raw)
+    return current_user
+
+# otp
+@router.post("/phone/send-otp", response_model=PhoneSendOtpResponse, summary="Envoyer OTP par SMS (auth)")
+async def phone_send_otp(request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    await phone_uc.send_otp(db, user=current_user, ip=ip, ua=ua)
+    return {"message": "Si un numéro est associé, un code a été envoyé par SMS."}
+
+@router.post("/phone/verify", response_model=PhoneVerifyResponse, summary="Vérifier OTP SMS (auth)")
+async def phone_verify(data: PhoneVerifyRequest, request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    ip = request.client.host if request.client else None
+    await phone_uc.verify_otp(db, user=current_user, code=data.code, ip=ip)
+    return {"message": "Téléphone vérifié avec succès.", "phone_verified": True}
 
 # --- Google OAuth2 ---
 @router.get("/google/login")
@@ -132,113 +241,3 @@ async def microsoft_redirect(
     """
     data = await ms_use_case.handle_callback(db, code, state)
     return data
-
-@router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
-
-# activer/désactiver compte
-@router.get(
-    "/validate-token",
-    response_model=TokenValidationResponse,
-    summary="Validate JWT and return associated user",
-    description=(
-        "Public endpoint for other services to validate a JWT (RS256). "
-        "Provide the token via 'Authorization: Bearer <token>'."
-    ),
-)
-async def validate_token(creds: HTTPAuthorizationCredentials = Depends(bearer), db: AsyncSession = Depends(get_db)):
-    if not creds or not creds.scheme.lower() == "bearer":
-        return TokenValidationResponse(valid=False, message="Token manquant")
-    token = creds.credentials
-    try:
-        payload = jwt_service.decode_token(token)
-        sub = payload.get("sub")
-        iat = payload.get("iat")
-        exp = payload.get("exp")
-        if not sub:
-            return TokenValidationResponse(valid=False, message="Claim 'sub' absent")
-
-        from uuid import UUID
-        user = await user_uc.get_by_id(db, UUID(sub))
-        if not user or not user.is_active:
-            return TokenValidationResponse(valid=False, sub=sub, iat=iat, exp=exp, message="Utilisateur inactif ou introuvable")
-
-        return TokenValidationResponse(
-            valid=True,
-            sub=sub,
-            iat=iat,
-            exp=exp,
-            user=user,
-            kid=jwt_service.kid,
-        )
-    except Exception:
-        return TokenValidationResponse(valid=False, message="Token invalide")
-
-# reset password
-@router.post("/password/forgot", response_model=PwdMessageResponse, summary="Start password reset flow (email)")
-async def password_forgot(data: PasswordForgotRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    ip = request.client.host if request.client else None
-    ua = request.headers.get("user-agent")
-    await pwd_uc.request_reset(db, data.email, ip, ua)
-    return {"message": "Si un compte existe pour cet email, un lien de réinitialisation a été envoyé."}
-
-@router.post("/password/reset", response_model=PwdMessageResponse, summary="Confirm password reset with token")
-async def password_reset(data: PasswordResetRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    ip = request.client.host if request.client else None
-    ua = request.headers.get("user-agent")
-    await pwd_uc.confirm_reset(db, data.token, data.new_password, ip, ua)
-    return {"message": "Mot de passe réinitialisé avec succès."}
-
-@router.post("/email/send-verification", response_model=EmailVerifyMessageRespon, summary="Send email verification link")
-async def email_send_verification(data: EmailVerificationSendRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    ip = request.client.host if request.client else None
-    ua = request.headers.get("user-agent")
-    await email_verify_uc.send_verification(db, data.email, ip, ua)
-    return {"message": "Si un compte existe pour cet email, un lien de vérification a été envoyé."}
-
-@router.post("/email/verify", response_model=EmailVerifyMessageRespon, summary="Confirm email verification with token")
-async def email_verify(data: EmailVerificationConfirmRequest, request: Request, db: AsyncSession = Depends(get_db)):
-    ip = request.client.host if request.client else None
-    ua = request.headers.get("user-agent")
-    await email_verify_uc.confirm_verification(db, data.token, ip, ua)
-    return {"message": "Adresse email vérifiée avec succès."}
-
-
-@router.get("/me", response_model=UserResponse, summary="Get my profile")
-async def get_me(current_user: User = Depends(get_current_user)):
-    return await uc.get_me(current_user)
-
-# update profile
-@router.put("/me", response_model=UserResponse, summary="Update my profile")
-async def update_me(data: UserUpdateMeRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = await uc.update_me(db, current_user,
-                              first_name=data.first_name,
-                              last_name=data.last_name,
-                              phone=data.phone,
-                              position=data.position)
-    return user
-
-@router.post("/me/avatar", response_model=UserResponse, summary="Upload my avatar")
-async def upload_avatar(
-    file: UploadFile = File(..., description="PNG/JPEG/WEBP image"),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    raw = await file.read()
-    avatar_url = await uc.update_avatar(db, current_user, raw_bytes=raw)
-    return current_user
-
-# otp
-@router.post("/phone/send-otp", response_model=PhoneSendOtpResponse, summary="Envoyer OTP par SMS (auth)")
-async def phone_send_otp(request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    ip = request.client.host if request.client else None
-    ua = request.headers.get("user-agent")
-    await phone_uc.send_otp(db, user=current_user, ip=ip, ua=ua)
-    return {"message": "Si un numéro est associé, un code a été envoyé par SMS."}
-
-@router.post("/phone/verify", response_model=PhoneVerifyResponse, summary="Vérifier OTP SMS (auth)")
-async def phone_verify(data: PhoneVerifyRequest, request: Request, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    ip = request.client.host if request.client else None
-    await phone_uc.verify_otp(db, user=current_user, code=data.code, ip=ip)
-    return {"message": "Téléphone vérifié avec succès.", "phone_verified": True}

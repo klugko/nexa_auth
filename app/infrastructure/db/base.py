@@ -16,6 +16,7 @@ entities_to_import = [
     "app.domain.entities.user_resume",
     "app.domain.entities.user_skill",
     "app.domain.entities.user_score",
+    "app.domain.entities.email_verification_token",
 ]
 
 for entity_module in entities_to_import:

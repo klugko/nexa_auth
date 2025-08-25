@@ -22,16 +22,14 @@ def _sha256_hex(raw: str) -> str:
 
 class EmailVerificationUseCases:
     async def send_verification(self, db: AsyncSession, email: str, ip: Optional[str], ua: Optional[str]) -> None:
-        # Rate-limit per (email+ip)
         key = f"emailverify:{email}:{ip}"
         if not rate_limiter.allow(key, settings.email_verification_rate_max_per_key, settings.email_verification_rate_window_seconds):
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Trop de requêtes, réessayez plus tard")
 
         user = await user_repo.get_by_email(db, email)
-        # Réponse générique (anti-enum). Si user inexistant, on "fait comme si".
         if user:
             if getattr(user, "email_verified", False):
-                return  # déjà vérifié → on ne renvoie rien, réponse générique
+                return  
 
             raw_token = secrets.token_urlsafe(48)
             hashed = _sha256_hex(raw_token)
@@ -67,6 +65,5 @@ class EmailVerificationUseCases:
         if datetime.utcnow() > entity.expires_at:
             raise HTTPException(status_code=400, detail="Token expiré")
 
-        # Marque l'email comme vérifié
         await user_repo.set_email_verified(db, entity.user_id, True)
         await token_repo.mark_used(db, entity)

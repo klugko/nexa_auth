@@ -4,7 +4,7 @@ class EmailVerificationSendRequest(BaseModel):
     email: EmailStr
 
 class EmailVerificationConfirmRequest(BaseModel):
-    token: str = Field(..., min_length=20)
+    token: str 
 
 class MessageResponse(BaseModel):
     message: str
