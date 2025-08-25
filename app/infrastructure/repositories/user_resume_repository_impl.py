@@ -1,5 +1,6 @@
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import delete
+from sqlalchemy import delete, desc, select
 from uuid import UUID
 from datetime import datetime
 
@@ -19,3 +20,12 @@ class UserResumeRepositoryImpl(UserResumeRepository):
         from datetime import timezone
         resume.parsed_at = datetime.utcnow()
         await db.commit()
+
+    async def get_latest_for_user(self, db: AsyncSession, user_id: UUID) -> Optional[UserResume]:
+        res = await db.execute(
+            select(UserResume)
+            .where(UserResume.user_id == user_id)
+            .order_by(desc(UserResume.parsed_at), desc(UserResume.id))
+            .limit(1)
+        )
+        return res.scalars().first()

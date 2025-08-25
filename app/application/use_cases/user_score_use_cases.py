@@ -48,7 +48,7 @@ class UserScoreUseCases:
         global_skill_score = float(agg["global_score"]) if "global_score" in agg else 0.0
 
         resume = await resume_repo.get_latest_for_user(db, user_id)
-        parsed_at = resume.parsed_at if resume and resume.parsed_at else None
+        parsed_at = resume.parsed_at if resume else None
 
         sig = UserSignals(
             email_verified=bool(getattr(user, "email_verified", False)),
@@ -69,4 +69,8 @@ class UserScoreUseCases:
     async def recompute_for_user(self, db: AsyncSession, *, user_id: UUID):
         data = await self._compute_signals(db, user_id=user_id)
         entity = await score_repo.upsert(db, user_id, data["result"]["score"])
-        return {"score": entity.score, "updated_at": entity.updated_at, "components": data["result"]["components"]}
+        return {
+            "score": entity.score,
+            "updated_at": entity.updated_at.isoformat(),  
+            "components": data["result"]["components"]
+        }
