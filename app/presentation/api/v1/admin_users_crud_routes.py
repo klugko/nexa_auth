@@ -38,7 +38,7 @@ def _to_out(u) -> AdminUserOut:
         is_active=u.is_active,
         email_verified=getattr(u, "email_verified", None),
         created_at=u.created_at,
-        roles=[r.name for r in (u.roles or [])],
+        roles=[r.name for r in getattr(u, "roles", []) or []],
     )
 
 @router.get("", response_model=PaginatedUsers, summary="List users (admin)")
@@ -78,7 +78,7 @@ async def create_user(data: AdminUserCreate, db: AsyncSession = Depends(get_db))
         is_active=data.is_active,
         email_verified=data.email_verified,
     )
-    return _to_out(u)
+    return  _to_out(u)
 
 @router.put("/{user_id}", response_model=AdminUserOut, summary="Replace/update user (admin)")
 @router.patch("/{user_id}", response_model=AdminUserOut, summary="Partial update user (admin)")
@@ -110,4 +110,4 @@ async def activate_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
 @router.post("/{user_id}/deactivate", response_model=AdminUserOut, summary="Désactiver un utilisateur + invalider refresh tokens (admin)")
 async def deactivate_user(user_id: UUID, db: AsyncSession = Depends(get_db)):
     u = await status_uc.deactivate(db, user_id)
-    return _to_out(u)
+    return  _to_out(u)

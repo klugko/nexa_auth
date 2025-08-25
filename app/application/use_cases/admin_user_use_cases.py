@@ -42,11 +42,9 @@ class AdminUserUseCases:
         is_active: bool,
         email_verified: Optional[bool],
     ):
-        # Unicité email
         existing = await user_repo.get_by_email(db, email)
         if existing:
             raise HTTPException(status_code=400, detail="Email déjà utilisé")
-
         from app.domain.entities.user import User
         hashed = hash_password(password) if password else None
         user = User(
@@ -61,7 +59,7 @@ class AdminUserUseCases:
         )
         created = await user_repo.create(db, user)
         return created
-
+    
     async def update_user(
         self,
         db: AsyncSession,

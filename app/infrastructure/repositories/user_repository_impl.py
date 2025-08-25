@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import update
+from sqlalchemy import func, or_, update
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from app.domain.entities.user import User
@@ -14,10 +14,6 @@ class UserRepositoryImpl(UserRepository):
         return result.scalars().first()
 
     async def get_by_id(self, db: AsyncSession, user_id: UUID):
-        result = await db.execute(select(User).where(User.id == user_id))
-        return result.scalars().first()
-    
-    async def get_by_id(self, db: AsyncSession, user_id: UUID):
         result = await db.execute(
             select(User)
             .options(selectinload(User.roles))  
@@ -28,8 +24,10 @@ class UserRepositoryImpl(UserRepository):
     async def create(self, db: AsyncSession, user: User):
         db.add(user)
         await db.commit()
-        await db.refresh(user)
-        return user
+        result = await db.execute(
+            select(User).options(selectinload(User.roles)).where(User.id == user.id)
+        )
+        return result.scalars().first()
     
     async def set_email_verified(self, db: AsyncSession, user_id, verified: bool) -> None:
         await db.execute(update(User).where(User.id == user_id).values(email_verified=verified))
@@ -106,8 +104,10 @@ class UserRepositoryImpl(UserRepository):
         for k, v in fields.items():
             setattr(user, k, v)
         await db.commit()
-        await db.refresh(user)
-        return user
+        result = await db.execute(
+            select(User).options(selectinload(User.roles)).where(User.id == user.id)
+        )
+        return result.scalars().first()
 
     async def delete_by_id(self, db: AsyncSession, user_id: UUID) -> bool:
         res = await db.execute(select(User).where(User.id == user_id))
@@ -123,8 +123,10 @@ class UserRepositoryImpl(UserRepository):
         if not active:
             user.refresh_revoked_at = datetime.utcnow()
         await db.commit()
-        await db.refresh(user)
-        return user
+        result = await db.execute(
+            select(User).options(selectinload(User.roles)).where(User.id == user.id)
+        )
+        return result.scalars().first()
 
     async def revoke_refresh_now(self, db: AsyncSession, user: User) -> User:
         user.refresh_revoked_at = datetime.utcnow()

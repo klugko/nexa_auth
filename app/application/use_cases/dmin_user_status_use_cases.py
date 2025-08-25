@@ -10,10 +10,10 @@ class AdminUserStatusUseCases:
         user = await user_repo.get_by_id(db, user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable")
-        return await user_repo.set_active(db, user, True)
+        return await user_repo.set_active(db, user, True)  
 
     async def deactivate(self, db: AsyncSession, user_id: UUID):
         user = await user_repo.get_by_id(db, user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable")
-        return await user_repo.set_active(db, user, False)
+        return await user_repo.set_active(db, user, False) 
